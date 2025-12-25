@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Premium UPI QR Code Generator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at top left, #e9d5ff, #f8fafc 40%);
+    color: #0f172a;
+}
+
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 60px 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.header h1 {
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.header p {
+    color: #64748b;
+    max-width: 640px;
+    margin: 10px auto;
+}
+
+.card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(16px);
+    border-radius: 18px;
+    padding: 40px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.08);
+}
+
+input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 18px;
+    font-size: 14px;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg,#6366f1,#8b5cf6);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.download-btn {
+    margin-top: 12px;
+    background: #0f172a;
+}
+
+.qr-box canvas {
+    width: 220px;
+    height: 220px;
+    margin: 0 auto 16px;
+}
+.footer-text {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    color: #9ca3af;
+}
+.text-muted-tight {
+    color: #6b7280;
+    letter-spacing: -0.015em;
+}
+.upi-card { background: #ffffff; border-radius: 16px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.08); } .upi-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; letter-spacing: 0.5px; } .qr-box img { width: 220px; height: 220px; margin: 0 auto 16px; } .upi-id { font-size: 14px; color: #475569; margin-bottom: 12px; } .upi-text { font-size: 14px; font-weight: 600; margin-bottom: 16px; } .upi-logos img { height: 28px; margin: 0 6px; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>UPI QR Code Generator</h1>
+        <p>Create premium UPI QR codes with custom amount and merchant branding.</p>
+    </div>
+
+    <div class="card">
+
+        <!-- LEFT FORM -->
+        <div>
+            <input id="merchantName" type="text" placeholder="Merchant Name" >
+            <input id="upiId" type="text" placeholder="merchant@upi">
+            <input id="amount" type="number" placeholder="Enter Amount">
+            <input id="note" type="text" placeholder="Remark">
+            <select id="currency" name="currency">
+                <option value="INR">INR</option>
+                <option value="LKR">LKR</option>
+                <option value="BTN">BTN</option>
+                <option value="SGD">SGD</option>
+                <option value="AED">AED</option>
+                <option value="FRF">FRF</option>
+                <option value="NPR">NPR</option>
+                <option value="MUR">MUR</option>
+                <option value="QAR">QAR</option>
+            </select>
+
+            <button class="download-btn" onclick="downloadQR()">Download QR Code</button>
+        </div>
+
+        <!-- RIGHT PREVIEW -->
+        <div>
+            <div class="upi-card">
+                <div class="upi-title">Merchant Name</div>
+
+                <div class="qr-box" id="qrCode"></div>
+
+                <div class="upi-id">merchant@upi</div>
+
+                <div class="upi-text">Scan and pay with any BHIM UPI app</div>
+
+                <div class="upi-logos">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/65/BHIM_SVG_Logo.svg"                                 crossorigin="anonymous">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f2/Google_Pay_Logo.svg"                               crossorigin="anonymous">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/71/PhonePe_Logo.svg/512px-PhonePe_Logo.svg.png" crossorigin="anonymous">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/42/Paytm_logo.png"                                    crossorigin="anonymous">
+                </div>
+                <p class="footer-text">Create your own UPI QR code at 
+                    <span class="text-muted-tight" id="host"></span>
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- QR LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+let qr;
+
+const merchantName = document.getElementById("merchantName");
+const upiId = document.getElementById("upiId");
+const amountInput = document.getElementById("amount");
+const noteInput = document.getElementById("note");
+const currency = document.getElementById("currency");
+document.getElementById('host').value = window.location.href;
+
+function buildUpiUrl() {
+    const name   = merchantName.value.trim();
+    const upi    = upiId.value.trim();
+    const amount = amountInput.value.trim();
+    const note   = noteInput.value.trim();
+    const cu   = currency.value.trim();
+
+    let url = `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(name)}`;
+
+    if (amount && amount > 0) {
+        url += `&am=${amount}&cu=${cu}`;
+    }
+
+    if (note) {
+        url += `&tn=${encodeURIComponent(note)}`;
+    }
+
+    return url;
+}
+
+function generateQR() {
+
+    const url = buildUpiUrl();
+    if (!url) return;
+
+    qrCode.innerHTML = "";
+
+    qr = new QRCode(qrCode, {
+        text: url,
+        width: 220,
+        height: 220,
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    document.querySelector(".upi-title").innerText = merchantName.value;
+    document.querySelector(".upi-id").innerText = upiId.value;
+}
+
+function downloadQR() {
+    const card = document.querySelector(".upi-card");
+
+    html2canvas(card, {
+        scale: 3,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        allowTaint: true
+    }).then(canvas => {
+        const link = document.createElement("a");
+        link.download = "upi-qr-card.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+}
+
+[merchantName, upiId, amountInput, noteInput, currency].forEach(input => {
+    input.addEventListener("input", generateQR);
+});
+
+window.onload = generateQR;
+</script>
+
+</body>
+</html>
